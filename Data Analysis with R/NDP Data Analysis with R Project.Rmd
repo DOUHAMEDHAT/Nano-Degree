@@ -1,0 +1,368 @@
+TITLE by Mohamed Medhat El Dakrory
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Load all of the packages that you end up using in your analysis in this code
+# chunk.
+
+# Notice that the parameter "echo" was set to FALSE for this code chunk. This
+# prevents the code from displaying in the knitted HTML output. You should set
+# echo=FALSE for all code chunks in your file, unless it makes sense for your
+# report to show the code that generated a particular plot.
+
+# The other parameters for "message" and "warning" should also be set to FALSE
+# for other code chunks once you have verified that each plot comes out as you
+# want it to. This will clean up the flow of your report.
+RequiredPackages = 
+  base::list('dplyr', 'data.table', 'ggplot2','plyr','lubridate','tidyverse', 'PerformanceAnalytics', 'knitr')
+for(i in RequiredPackages){
+  if(!require(i,character.only = TRUE))
+  {install.packages(i) & library(i,character.only = TRUE)}
+}
+
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Load the Data
+DATA <- base::data.frame(
+  utils::read.csv('wineQualityReds.csv'),stringsAsFactors = FALSE)
+```
+
+> Red Wine data can be explored through acidity levels, sugar levels, and alcohol and compare each of those with quality to know does sugar or alcohol levels which impact the happiness of customers:
+
+# Univariate Plots Section
+
+> Univariate_Plots
+
+Explore and clean data:
+
+- There is no N/A values in our data, so it's slightly clean
+- To classify dataset with rating and alcohol_level will class it to three types: Low, Medium and High
+
+```{r echo=FALSE, message = FALSE, warnings = FALSE, Univariate_Plots}
+### Explore and clean data:
+
+head(DATA)
+tail(DATA)
+summary(DATA)
+# There is no N/A values in our data, so it's slightly clean
+
+str(DATA)
+# Data structure is normal and data_types are assigned clearly Some changes:
+#  quality need to be transformed into factor,
+#  first column "X" is unrequired column it can be removed or used as unique id
+
+# Distribution of Quality Rating
+DATA %>%
+  ggplot(aes(as.factor(quality))) +
+  geom_histogram(stat="count") +
+  xlab('Quality Rating') + 
+  ylab('Number of Ratings') +
+  ggtitle("Distribution of Quality Rating")
+
+
+
+
+# To classify dataset with rating will class it to three types:
+# Low, Medium and High as low is (3,4), medium is (5,6) and high is (7,8)
+DATA <- DATA %>% mutate(Class = case_when(quality < 5 ~ 'Low',
+                                          quality < 7 ~ 'Medium',
+                                          quality < 9 ~ 'High'),
+                        alcohol_level = case_when(alcohol > 11.1 ~ 'High',
+                                                  alcohol > 9.5 ~ 'Medium',
+                                                  alcohol <= 9.5 ~ 'Low'))
+
+
+
+mycols <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF")
+
+Classification <- DATA %>%
+  group_by(Class) %>% 
+  summarise(Size = count(Class)) %>%
+  mutate(Prop = Size / nrow(DATA)*100.00)
+
+
+# So it appear that medium quality has a 82% of data and has the highest contribution
+
+
+# Distribution of "fixed.acidity" vs "Quality":
+# Mostly rating with 5 & 6 are normally Distributed
+DATA %>%
+  ggplot(aes(x = fixed.acidity)) +
+  geom_bar() +
+  xlab('fixed.acidity') + 
+  ylab('Number of Observations') +
+  scale_x_continuous() +
+  facet_wrap(~quality) +
+  ggtitle("Distrbution of fixed.acidity vs Quality")
+
+DATA %>%
+  ggplot(aes(x = volatile.acidity)) +
+  geom_bar() +
+  xlab('volatile.acidity') + 
+  ylab('Number of Observations') +
+  scale_x_continuous() +
+  facet_wrap(~quality) +
+  ggtitle("Distrbution of volatile.acidity vs Quality")
+
+DATA %>%
+  ggplot(aes(x = citric.acid)) +
+  geom_bar() +
+  xlab('citric.acid') + 
+  ylab('Number of Observations') +
+  scale_x_continuous() +
+  facet_wrap(~quality) +
+  ggtitle("Distrbution of citric.acid vs Quality")
+
+
+DATA %>%
+  ggplot(aes(x = volatile.acidity, color = alcohol_level)) +
+  geom_bar() +
+  xlab('volatile.acidity') + 
+  ylab('Number of Observations') +
+  scale_x_continuous() +
+  facet_wrap(~quality) +
+  ggtitle("Distrbution of volatile.acidity vs Quality")
+
+# Summary: The highest ratings are 5 & 6 in the middle of ratings and this lead to that
+# most people are mediocre of ratings the red wine
+
+
+```
+
+
+# Univariate Analysis
+
+
+### What is the structure of your dataset?
+Data_set structure is a data frame in the shape of the table
+Contains all observations for ratings with details of red wine elements.
+
+### What is/are the main feature(s) of interest in your dataset?
+The quality rating is the highest KPI we can dig into it and ask questions.
+The fixed.acidity with each quality might give us a relation between.
+
+### What other features in the dataset do you think will help support your \
+investigation into your feature(s) of interest?
+Alcohol data is important for a relationship between variables:
+
+### Did you create any new variables from existing variables in the dataset?
+Yes, I created a class of quality represent each rating with category as:
+To classify dataset with rating will class it to three types:
+Low, Medium and High as low is (3,4), the medium is (5,6) and high is (7,8)
+
+And Quality Level which represents the level of %alcohol in the red wine,
+I take the three levels based on dataset quartile
+
+### Of the features you investigated, were there any unusual distributions? \
+Did you perform any operations on the data to tidy, adjust, or change the form \
+of the data? If so, why did you do this?
+No, I did not change the form of the data, as I looked to variables and where a normal distribution.
+
+Conculsion:
+Red wine has an 82% of its rating as 5 & 6, So most customers seem to they are like red wine but not too much.
+
+# Bivariate Plots Section
+
+ 
+```{r echo=FALSE, message = FALSE, warnings = FALSE, Bivariate_Plots}
+DATA %>%
+  ggplot(aes(x = quality, y = fixed.acidity, color = alcohol_level)) +
+  geom_point() +
+  xlab('quality') + 
+  ylab('fixed.acidity') +
+  scale_x_continuous() +
+  ggtitle("Relation of fixed.acidity vs Quality")
+
+DATA %>%
+  ggplot(aes(x = quality, y = volatile.acidity, color = alcohol_level)) +
+  geom_point() +
+  xlab('quality') + 
+  ylab('volatile.acidity') +
+  scale_x_continuous() +
+  ggtitle("Relation of volatile.acidity vs Quality")
+
+DATA %>%
+  ggplot(aes(x = quality, y = citric.acid, color = alcohol_level)) +
+  geom_point() +
+  xlab('quality') + 
+  ylab('citric.acid') +
+  scale_x_continuous() +
+  ggtitle("Relation of citric.acid vs Quality")
+
+DATA %>%
+  ggplot(aes(x = quality, y = alcohol, color = alcohol_level)) +
+  geom_point() +
+  xlab('quality') + 
+  ylab('alcohol') +
+  scale_x_continuous() +
+  ggtitle("Relation of alcohol vs Quality")
+
+DATA %>%
+  ggplot(aes(x = quality, y = density, color = alcohol_level)) +
+  geom_point() +
+  xlab('quality') + 
+  ylab('density') +
+  scale_x_continuous() +
+  ggtitle("Relation of density vs Quality")
+
+DATA %>%
+  ggplot(aes(x = fixed.acidity, y = citric.acid)) +
+  geom_point() +
+  xlab('fixed.acidity') + 
+  ylab('citric.acid') +
+  ggtitle("Relation between: fixed.acidity & citric.acid") +
+  facet_wrap(~Class)
+
+DATA %>%
+  ggplot(aes(x = fixed.acidity, y = pH)) +
+  geom_point() +
+  xlab('fixed.acidity') + 
+  ylab('pH') +
+  ggtitle("Relation between: fixed.acidity & pH") +
+  facet_wrap(~Class)
+
+DATA %>%
+  ggplot(aes(x=factor(quality), y=alcohol))+ 
+  geom_boxplot(fill='grey', color='blue', outlier.color = 'red')+ 
+  xlab('quality') + 
+  ylab('alcohol') +
+  scale_y_continuous()+ 
+  scale_x_discrete()+ 
+  ggtitle('Wine Quality vs Alcohol')
+
+DATA %>%
+  ggplot(aes(x=factor(quality), y=density))+ 
+  geom_boxplot(fill='grey', color='blue', outlier.color = 'red')+ 
+  xlab('density') + 
+  ylab('alcohol') +
+  scale_y_continuous()+ 
+  scale_x_discrete()+ 
+  ggtitle('Wine Quality vs density')
+
+# There is a negative relationship between fixed.acidity & pH, which lead too as much as fixed.acidity is increase in red wine
+# pH is going to decrease and vice versa, and this appears as well as if we separate the three classes of rating
+# There is a positive relationship between fixed.acidity & citric.acid which leads too as much as fixed.acidity is increased in red wine
+# citric.acid is going to increase as well and vice versa, and this appears as well as if we separate the three classes of rating
+
+```
+
+# Bivariate Analysis
+
+
+### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+
+There is a positive relationship between fixed.acidity & citric.acid which leads too as much as fixed.acidity is increased in red wine citric.acid is going to increase as well and vice versa, and this appears as well as if we separate the three classes of rating
+  
+### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+
+Yes I used chart correlation to see all relations at once for all variables and the connection between.
+  
+### What was the strongest relationship you found?
+
+fixed.acidity & citric.acid has a strong positive relationship in dataset
+
+fixed.acidity % pH has a strong negative relationship in dataset
+  
+  # Multivariate Plots Section
+  
+```{r echo=FALSE, Multivariate_Plots, warnings = FALSE}
+
+DATA %>%
+  ggplot(aes(x = alcohol, y = chlorides)) +
+  geom_point() +
+  xlab('alcohol') + 
+  ylab('chlorides') +
+  ggtitle("Relation between: alcohol & chlorides") +
+  geom_smooth(method='lm')
+
+DATA %>%
+  ggplot(aes(x = alcohol, y = residual.sugar)) +
+  geom_point() +
+  xlab('alcohol') + 
+  ylab('residual.sugar') +
+  ggtitle("Relation between: alcohol & residual.sugar") +
+  geom_smooth(method='lm')
+
+# Will use here a linear regression model, as there is a posistive relationship:
+model <- DATA %>%
+  lm(formula = quality ~ fixed.acidity + pH)
+summary(model)
+plot(model)
+
+
+
+```
+
+# Multivariate Analysis
+
+### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+
+There is a slight increase in alcohol against chlorides is decreasing, but also there is a slight increase in residual.sugar while alcohol is increasing as well
+
+
+### Were there any interesting or surprising interactions between features?
+Customers with a high alcohol level have a high rating but have a low-density level while having a high alcohol level.
+
+### OPTIONAL: Did you create any models with your dataset? Discuss the strengths and limitations of your model.
+Yes used a linear regression model after defining the relationship between, to forecast the variable
+  
+------
+
+# Final Plots and Summary
+
+### Plot One
+```{r echo=FALSE, Plot_One, warnings = FALSE}
+DATA %>%
+  ggplot(aes(x = fixed.acidity, y = citric.acid)) +
+  geom_point() +
+  xlab('fixed.acidity') + 
+  ylab('citric.acid') +
+  ggtitle("Relation between: fixed.acidity & citric.acid") +
+  facet_wrap(~Class)
+```
+
+### Description One
+There is a positive relationship between fixed.acidity & citric.acid which lead too as much as fixed.acidity is increse in red wine
+citric.acid is going to increse as well and vs versa, and this appear as well as if we separate the three classes of rating
+
+### Plot Two
+```{r echo=FALSE, Plot_Two, warnings = FALSE}
+DATA %>%
+  ggplot(aes(x = fixed.acidity, y = pH)) +
+  geom_point() +
+  xlab('fixed.acidity') + 
+  ylab('pH') +
+  ggtitle("Relation between: fixed.acidity & pH") +
+  facet_wrap(~Class)
+
+```
+
+### Description Two
+There is a negative relationship between fixed.acidity & pH, which lead too as much as fixed.acidity is increse in red wine
+pH is going to decrese and vs versa, and this appear as well as if we separate the three classes of rating
+
+### Plot Three
+```{r echo=FALSE, Plot_Three, warnings = FALSE}
+DATA %>%
+  ggplot(aes(x = volatile.acidity, color = alcohol_level)) +
+  geom_bar() +
+  xlab('volatile.acidity') + 
+  ylab('Number of Observations') +
+  scale_x_continuous() +
+  facet_wrap(~quality) +
+  ggtitle("Distrbution of volatile.acidity vs Quality")
+```
+
+### Description Three
+Mostly data of rating 5 & 6 are normally distrubtued well and most of it land of medium level of alcohol
+
+------
+  
+  # Reflection
+  
+Red wine is normally liked with a medium level of alcohol, and most customers pretend to a normal rating for the red wine, not a high and not a low
+volatile.acidity and fixed.acidity had a normal disrtubtion amoung all ratings.
+medium quality has a 82% of data and has the highest contribution
+We can look also into at what white wine will look like against red wine and what is the similarties and disimlarties between.
+  
